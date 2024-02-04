@@ -77,7 +77,58 @@ fn kmain() {
 	let mut uart = uart::Uart::new(0x1000_0000);
 	uart.init();
 
-	println!("Hello, world!");
+	println!("Welcome to FeOS!");
+
+	// Read from user input and echo it back
+	loop {
+		if let Some(c) = uart.read() {
+			match c {
+				// Backspace
+				8 | 127 => {
+					print!("{}{}{}", 8 as char, ' ', 8 as char);
+				}
+
+				// Newline
+				10 | 13 => {
+					println!();
+				}
+
+				// ANSI escape sequence (starting with left bracket)
+				0x1b => {
+					if let Some(next_byte) = uart.read() {
+
+						// Right bracket
+						if next_byte == 0x5b {
+							if let Some(ansi_byte) = uart.read() {
+								match ansi_byte {
+									0x41 => {
+										println!("up-arrow");
+									}
+									0x42 => {
+										println!("down-arrow");
+									}
+									0x43 => {
+										println!("right-arrow");
+									}
+									0x44 => {
+										println!("left-arrow");
+									}
+									_ => {
+										println!("Unknown ANSI escape sequence: 0x1b 0x5b 0x{:x}", ansi_byte);
+									}
+								}
+							}
+						}
+					}
+				}
+
+				// Anything else
+				_ => {
+					print!("{}", c as char);
+				}
+			}
+		}
+	}
 }
 
 // ///////////////////////////////////

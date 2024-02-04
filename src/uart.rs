@@ -58,12 +58,14 @@ impl Uart {
     pub fn read(&self) -> Option<u8> {
         let ptr: *const u8 = self.base_address as *const u8;
         unsafe {
-            return if ptr.add(5).read_volatile() & (1 << 0) != 0 {
-                Some(ptr.add(0).read_volatile())
-            }
-            else {
+			if ptr.add(5).read_volatile() & 1 == 0 {
+                // The DR bit is 0, meaning no data
                 None
-            };
+			}
+			else {
+				// The DR bit is 1, meaning data!
+				Some(ptr.add(0).read_volatile())
+			}
         }
     }
 

@@ -14,9 +14,11 @@ use core::arch::asm;
 macro_rules! print
 {
 	($($args:tt)+) => ({
-
+		use core::fmt::Write;
+		let _ = write!(uart::Uart::new(0x1000_0000), $($args)+);
 	});
 }
+
 #[macro_export]
 macro_rules! println
 {
@@ -39,7 +41,7 @@ extern "C" fn eh_personality() {}
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
 	print!("Aborting: ");
-	if let Some(_p) = info.location() {
+	if let Some(p) = info.location() {
 		println!(
 		         "line {}, file {}: {}",
 		         p.line(),
@@ -72,13 +74,14 @@ fn abort() -> ! {
 #[no_mangle]
 extern "C"
 fn kmain() {
-	// Main should initialize all sub-systems and get
-	// ready to start scheduling. The last thing this
-	// should do is start the timer.
+	let mut uart = uart::Uart::new(0x1000_0000);
+	uart.init();
+
+	println!("Hello, world!");
 }
 
 // ///////////////////////////////////
 // / RUST MODULES
 // ///////////////////////////////////
 
-
+pub mod uart;
